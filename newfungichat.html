@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fungi Chat Board</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Your improved CSS code here */
+        .delete-button {
+            font-size: 12px;
+            padding: 2px 5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Fungi Chat Board</h1>
+    </header>
+    <div class="chat-container" id="chat-container">
+        <div class="message system-message">Welcome to the Fungi Chat Board!</div>
+    </div>
+    <div class="chat-input">
+        <input type="text" id="username-input" placeholder="Your Username">
+        <input type="password" id="password-input" placeholder="Password">
+        <label for="remember-me">Remember Me</label>
+        <input type="checkbox" id="remember-me">
+        <input type="text" id="message-input" placeholder="Type your message here...">
+        <button id="send-button">Send</button>
+    </div>
+    <script>
+        // Your JavaScript code here
+        const messageInput = document.querySelector('#message-input');
+        const sendButton = document.querySelector('#send-button');
+        const chatContainer = document.querySelector('#chat-container');
+
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keydown', handleKeyDown);
+
+        window.onload = function() {
+            // Populate username and message from localStorage if available
+            const savedUsername = localStorage.getItem('username');
+            if (savedUsername) {
+                document.querySelector('#username-input').value = savedUsername;
+            }
+
+            // Populate password and rememberMe from localStorage if available
+            const savedPassword = localStorage.getItem('password');
+            const rememberMe = localStorage.getItem('rememberMe') === 'true';
+            if (rememberMe) {
+                document.querySelector('#password-input').value = savedPassword;
+                document.querySelector('#remember-me').checked = true;
+            }
+
+            // Populate chat history from localStorage if available
+            const chatHistory = JSON.parse(localStorage.getItem('chatHistory'));
+            if (chatHistory) {
+                chatHistory.forEach(({ username, message }) => {
+                    if (username && message) {
+                        appendUserMessage(username, message);
+                    }
+                });
+            }
+        }
+
+        function sendMessage() {
+            const userMessage = messageInput.value.trim();
+            if (userMessage !== '') {
+                const username = document.querySelector('#username-input').value;
+                const rememberMe = document.querySelector('#remember-me').checked;
+
+                if (username) {
+                    appendUserMessage(username, userMessage);
+                    if (rememberMe) {
+                        // Save username, password, rememberMe, message, and chat history to localStorage
+                        const password = document.querySelector('#password-input').value;
+                        localStorage.setItem('username', username);
+                        localStorage.setItem('password', password);
+                        localStorage.setItem('rememberMe', rememberMe);
+                        const chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+                        chatHistory.push({ username, message: userMessage });
+                        localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                    }
+                    getBotResponse(userMessage);
+                    messageInput.value = '';
+                    scrollChatToBottom();
+                } else {
+                    // Display an error message if no username is provided
+                    alert('Please enter a username.');
+                }
+            }
+        }
+
+        function handleKeyDown(event) {
+            if (event.keyCode === 13) { // Enter key
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function appendUserMessage(username, message) {
+            const userMessageDiv = createMessageDiv(username, message, 'user-message');
+            chatContainer.appendChild(userMessageDiv);
+            scrollChatToBottom();
+        }
+
+        function appendBotMessage(message) {
+            const botMessageDiv = createMessageDiv('', message);
+            chatContainer.appendChild(botMessageDiv);
+            scrollChatToBottom();
+        }
+
+        function createMessageDiv(username, message, cssClass = '') {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', cssClass);
+            messageDiv.textContent = `${username ? username + ': ' : ''}${message}`;
+            
+            if (cssClass === 'user-message') {
+                const deleteButton = document.createElement('button');
+                deleteButton.innerText = 'Delete';
+                deleteButton.classList.add('delete-button');
+                deleteButton.addEventListener('click', () => {
+                    messageDiv.remove();
+                    // Remove the message from chat history in localStorage
+                    const chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+                    const updatedHistory = chatHistory.filter(item => item.username !== username || item.message !== message);
+                    localStorage.setItem('chatHistory', JSON.stringify(updatedHistory));
+                });
+                messageDiv.appendChild(deleteButton);
+            }
+            
+            return messageDiv;
+        }
+
+        function getBotResponse(userMessage) {
+            const botResponse = simulateBotResponse(userMessage);
+            appendBotMessage(botResponse);
+        }
+
+        function simulateBotResponse(userMessage) {
+            const responses = [
+                // ... (your existing bot responses) ...
+            ];
+            return responses[Math.floor(Math.random() * responses.length)];
+        }
+
+        function scrollChatToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
